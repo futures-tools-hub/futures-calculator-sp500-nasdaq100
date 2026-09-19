@@ -1,13 +1,660 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Futures Lot Calculator – S&P 500 & NASDAQ-100</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futures TP/SL-Rechner – Alle Kontrakte</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
 <style>
-:root{color-scheme:dark;--bg:#070a0f;--panel:#0e141c;--line:#26364a;--text:#e7edf4;--muted:#8494a7;--green:#16c784;--red:#ea3943;--amber:#f0b90b}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 0,#251b09 0,transparent 35%),var(--bg);color:var(--text);font:16px system-ui,sans-serif}main{max-width:1050px;margin:auto;padding:28px 18px}.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:20px}@media(max-width:800px){.grid{grid-template-columns:1fr}}section{background:linear-gradient(#0e141c,#0b1017);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 12px 34px #0008}h1{font-size:1.5rem;margin:0 0 22px;color:var(--amber)}h2{font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}label{display:block;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 7px}select,input,button{font:inherit}select,input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;background:#0a0f16;color:var(--text);font-size:1.05rem}select:focus,input:focus{outline:2px solid var(--amber)}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.units{display:grid;grid-template-columns:1fr 1fr;gap:8px}.units button,.preset{padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a0f16;color:var(--muted);cursor:pointer}.units button.active,.units button:hover,.preset:hover{color:var(--amber);border-color:var(--amber)}.meta,.hint{color:var(--muted);font-size:.78rem;margin-top:7px}.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.cardrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{padding:18px;border-radius:11px}.tp{border:1px solid #16c78466;background:#16c78418}.sl{border:1px solid #ea394366;background:#ea394318}.caption{font-size:.75rem;text-transform:uppercase;letter-spacing:.13em}.tp .caption{color:var(--green)}.sl .caption{color:var(--red)}.amount{font-size:clamp(1.4rem,4vw,2rem);font-weight:700;margin-top:10px}.tp .amount{color:var(--green)}.sl .amount{color:var(--red)}.formula{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5}.details{margin-top:18px;border-top:1px solid #172130}.detail{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px dashed #1c2735}.detail span:first-child{color:var(--muted)}.detail span:last-child{font-family:ui-monospace,monospace;text-align:right}.ratio{text-align:center;margin:16px 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--amber)}.error{color:#ff7b83;margin-top:8px;font-size:.8rem}
+  :root{
+    --bg:#070a0f;
+    --panel:#0e141c;
+    --panel-2:#0b1017;
+    --line:#1d2836;
+    --line-soft:#172130;
+    --text:#e7edf4;
+    --muted:#8494a7;
+    --muted-2:#5c6b7d;
+    --green:#16c784;
+    --red:#ea3943;
+    --amber:#f0b90b;
+    --radius:14px;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(900px 520px at 88% -10%, rgba(234,57,67,.055), transparent 62%),
+      radial-gradient(900px 520px at 8% 112%, rgba(22,199,132,.055), transparent 62%),
+      linear-gradient(rgba(148,163,184,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.045) 1px, transparent 1px);
+    background-size:auto,auto,44px 44px,44px 44px;
+    background-attachment:fixed;
+    color:var(--text);
+    min-height:100vh;
+  }
+  .mono{font-family:var(--mono)}
+
+  main{max-width:1160px;margin:0 auto;padding:28px 20px 40px}
+  .layout{display:grid;grid-template-columns:minmax(0,10fr) minmax(0,12fr);gap:20px;align-items:start}
+  @media(max-width:920px){.layout{grid-template-columns:1fr}}
+
+  .panel{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;box-shadow:0 12px 34px rgba(0,0,0,.35);
+    animation:rise .55s ease both;
+  }
+  .panel.results{animation-delay:.1s}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+  .panel-head h2{font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .panel-head h2::before{content:"▮ ";color:var(--amber)}
+
+  .field{margin-bottom:18px}
+  .field label{
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    font-size:.72rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:8px;
+  }
+  .field label .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;text-transform:none;color:var(--muted-2)}
+  select,input[type=text]{
+    width:100%;background:#0a0f16;border:1px solid #24334a;border-radius:10px;
+    color:var(--text);font-family:var(--mono);font-size:1.12rem;font-weight:500;
+    padding:14px 15px;outline:none;transition:border-color .18s, box-shadow .18s;
+  }
+  select{
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23f0b90b' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center;padding-right:42px;
+  }
+  select option{background:#0a0f16;color:var(--text);font-family:var(--mono)}
+  select optgroup{color:var(--amber);font-style:normal;font-weight:700;letter-spacing:.06em}
+  select:focus,input[type=text]:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(240,185,11,.14)}
+  input::placeholder{color:#3f4d5f}
+  .field.invalid input{border-color:var(--red);box-shadow:0 0 0 3px rgba(234,57,67,.12)}
+  .err{display:none;margin-top:7px;font-size:.8rem;color:#ff7b83}
+  .err::before{content:"⚠ "}
+  .field.invalid .err{display:block;animation:shake .3s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  .hint{margin-top:7px;font-family:var(--mono);font-size:.74rem;color:var(--muted-2);min-height:1em}
+  .hint b{color:var(--muted);font-weight:500}
+
+  .meta-chip{
+    margin-top:9px;font-family:var(--mono);font-size:.74rem;color:var(--muted);
+    background:#0a0f16;border:1px dashed #25344a;border-radius:8px;padding:8px 11px;line-height:1.6;
+  }
+  .meta-chip b{color:var(--amber);font-weight:500}
+
+  .stepper{display:grid;grid-template-columns:56px 1fr 56px;gap:8px}
+  .stepper input{text-align:center}
+  .step{
+    background:#101826;border:1px solid #24334a;border-radius:10px;color:var(--text);
+    font-family:var(--mono);font-size:1.4rem;cursor:pointer;transition:all .15s;user-select:none;
+  }
+  .step:hover{border-color:var(--amber);color:var(--amber);background:#141d2c}
+  .step:active{transform:scale(.93)}
+  .step:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .seg{
+    position:relative;display:grid;grid-template-columns:1fr 1fr;
+    background:#0a0f16;border:1px solid #24334a;border-radius:10px;padding:4px;
+  }
+  .seg .thumb{
+    position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);
+    background:rgba(240,185,11,.13);border:1px solid rgba(240,185,11,.5);border-radius:7px;
+    transition:transform .28s cubic-bezier(.5,1.4,.5,1);
+  }
+  .seg[data-unit="ticks"] .thumb{transform:translateX(100%)}
+  .seg button{
+    position:relative;z-index:1;background:none;border:none;color:var(--muted);
+    font-family:'Space Grotesk',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:10px 6px;cursor:pointer;border-radius:7px;transition:color .2s;
+  }
+  .seg button.on{color:var(--amber)}
+  .seg button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+  .seg-note{margin-top:8px;font-size:.74rem;color:var(--muted-2);font-family:var(--mono)}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:460px){.duo{grid-template-columns:1fr}}
+  #tp{border-left:3px solid var(--green)}
+  #sl{border-left:3px solid var(--red)}
+
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .chip{
+    font-family:var(--mono);font-size:.7rem;color:var(--muted);
+    background:#0a0f16;border:1px solid #24334a;border-radius:999px;
+    padding:6px 12px;cursor:pointer;transition:all .16s;
+  }
+  .chip:hover{color:var(--amber);border-color:var(--amber);transform:translateY(-2px)}
+  .chip:active{transform:translateY(0) scale(.96)}
+
+  .res-asset{
+    font-family:var(--mono);font-size:.76rem;color:var(--amber);
+    border:1px solid rgba(240,185,11,.35);background:rgba(240,185,11,.07);
+    padding:5px 11px;border-radius:999px;white-space:nowrap;
+  }
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  @media(max-width:460px){.cards{grid-template-columns:1fr}}
+  .card{border-radius:12px;padding:16px 16px 14px;position:relative;overflow:hidden;transition:opacity .25s}
+  .card::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);
+    transform:translateX(-120%);
+  }
+  .card.bump::after{animation:sheen .7s ease}
+  @keyframes sheen{to{transform:translateX(120%)}}
+  .card.tp{background:linear-gradient(180deg,rgba(22,199,132,.1),rgba(22,199,132,.02));border:1px solid rgba(22,199,132,.35)}
+  .card.sl{background:linear-gradient(180deg,rgba(234,57,67,.1),rgba(234,57,67,.02));border:1px solid rgba(234,57,67,.35)}
+  .card .lbl{display:flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:9px}
+  .card.tp .lbl{color:var(--green)} .card.sl .lbl{color:var(--red)}
+  .card .big{font-family:var(--mono);font-weight:700;font-size:clamp(1.45rem,3.6vw,2.05rem);line-height:1.15;letter-spacing:-.01em}
+  .card.tp .big{color:var(--green)} .card.sl .big{color:var(--red)}
+  .card.dim .big{color:var(--muted-2)}
+  .card .sub{margin-top:8px;font-family:var(--mono);font-size:.7rem;color:var(--muted);line-height:1.5;word-break:break-word}
+
+  .ratio{
+    display:none;align-items:center;justify-content:center;gap:10px;
+    border:1px solid #25344a;background:#0a0f16;border-radius:10px;
+    padding:10px 14px;margin-bottom:16px;font-size:.85rem;
+  }
+  .ratio.show{display:flex;animation:rise .35s ease}
+  .ratio .rlabel{color:var(--muted);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
+  .ratio .rval{font-family:var(--mono);font-weight:700;font-size:1.05rem;color:var(--amber)}
+
+  .detail{border-top:1px solid var(--line-soft)}
+  .drow{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding:10px 2px;border-bottom:1px dashed #1c2735;font-size:.86rem;
+  }
+  .drow .k{color:var(--muted)}
+  .drow .v{font-family:var(--mono);font-weight:500;text-align:right}
+  .drow .v.pos{color:var(--green)} .drow .v.neg{color:var(--red)}
+
+  .res-warn{
+    display:none;margin-bottom:14px;padding:10px 13px;border-radius:9px;
+    border:1px solid rgba(234,57,67,.4);background:rgba(234,57,67,.08);
+    color:#ff9aa1;font-size:.82rem;
+  }
+  .res-warn.show{display:block;animation:rise .3s ease}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body><main><h1>Futures TP/SL- & Lot-Rechner</h1><div class="grid"><section><h2>Eingaben</h2><label for="asset">Asset / Kontrakt</label><select id="asset"><option value="MNQ">MNQ – Micro E-mini NASDAQ-100</option><option value="MES">MES – Micro E-mini S&amp;P 500</option><option value="NQ">NQ – E-mini NASDAQ-100</option><option value="ES">ES – E-mini S&amp;P 500</option></select><div class="meta" id="meta"></div><label for="lots">Anzahl Lots / Kontrakte</label><input id="lots" type="number" min="1" step="1" value="7"><div id="err" class="error"></div><label>Einheit für TP / SL</label><div class="units"><button id="points" class="active">Punkte</button><button id="ticks">Ticks</button></div><div class="hint">1 Punkt = 4 Ticks · Tickgröße = 0,25 Punkte</div><div class="row"><div><label for="tp">Take-Profit</label><input id="tp" type="text" inputmode="decimal" value="15"><div id="tph" class="hint"></div></div><div><label for="sl">Stop-Loss</label><input id="sl" type="text" inputmode="decimal" value="15"><div id="slh" class="hint"></div></div></div><div class="presets"><button class="preset" data-p="0">MNQ · 7 · 15 P</button><button class="preset" data-p="1">MES · 1 · 4 Ticks</button><button class="preset" data-p="2">ES · 2 · SL 10 P</button><button class="preset" data-p="3">NQ · 3 · TP 2,5 P</button></div></section><section><h2>Ergebnis <span id="symbol"></span></h2><div class="cardrow"><div class="card tp"><div class="caption">▲ Take-Profit</div><div class="amount" id="tpout">—</div><div class="formula" id="tpf"></div></div><div class="card sl"><div class="caption">▼ Stop-Loss</div><div class="amount" id="slout">—</div><div class="formula" id="slf"></div></div></div><div class="ratio" id="ratio"></div><div class="details"><div class="detail"><span>Asset</span><span id="dasset"></span></div><div class="detail"><span>Anzahl Kontrakte</span><span id="dlots"></span></div><div class="detail"><span>Punktewert / Kontrakt</span><span id="dpv"></span></div><div class="detail"><span>Tickwert / Kontrakt</span><span id="dtv"></span></div><div class="detail"><span>Take-Profit</span><span id="dtp"></span></div><div class="detail"><span>Stop-Loss</span><span id="dsl"></span></div></div></section></div></main>
+<body>
+
+<main>
+  <div class="layout">
+
+    <section class="panel inputs" aria-labelledby="hIn">
+      <div class="panel-head"><h2 id="hIn">Eingaben</h2></div>
+
+      <div class="field">
+        <label for="asset">Asset / Kontrakt</label>
+        <select id="asset">
+          <optgroup label="▸ Aktienindex-Futures">
+            <option value="MNQ">MNQ · Micro E-mini NASDAQ-100</option>
+            <option value="MES">MES · Micro E-mini S&amp;P 500</option>
+            <option value="MYM">MYM · Micro E-mini Dow</option>
+            <option value="M2K">M2K · Micro E-mini Russell 2000</option>
+            <option value="NQ">NQ · E-mini NASDAQ-100</option>
+            <option value="ES">ES · E-mini S&amp;P 500</option>
+            <option value="YM">YM · E-mini Dow</option>
+            <option value="RTY">RTY · E-mini Russell 2000</option>
+            <option value="NKD">NKD · Nikkei 225 USD</option>
+          </optgroup>
+          <optgroup label="▸ Energie-Futures">
+            <option value="MCL">MCL · Micro WTI Crude Oil</option>
+            <option value="CL">CL · WTI Crude Oil</option>
+            <option value="MNG">MNG · Micro Natural Gas</option>
+            <option value="NG">NG · Natural Gas</option>
+          </optgroup>
+          <optgroup label="▸ Edelmetalle / Metalle">
+            <option value="MGC">MGC · Micro Gold</option>
+            <option value="GC">GC · Gold</option>
+            <option value="SIL">SIL · Micro Silver</option>
+            <option value="SI">SI · Silver</option>
+            <option value="MHG">MHG · Micro Copper</option>
+            <option value="HG">HG · Copper</option>
+            <option value="PL">PL · Platinum</option>
+          </optgroup>
+          <optgroup label="▸ Krypto-Futures (CME)">
+            <option value="MBT">MBT · Micro Bitcoin</option>
+            <option value="BTC">BTC · Bitcoin</option>
+            <option value="MET">MET · Micro Ether</option>
+            <option value="ETH">ETH · Ether</option>
+          </optgroup>
+          <optgroup label="▸ Währungs-Futures">
+            <option value="M6E">M6E · Micro EUR/USD</option>
+            <option value="M6A">M6A · Micro AUD/USD</option>
+            <option value="MCD">MCD · Micro CAD/USD</option>
+            <option value="M6B">M6B · Micro GBP/USD</option>
+            <option value="MSF">MSF · Micro CHF/USD</option>
+            <option value="6E">6E · Euro FX</option>
+            <option value="6J">6J · Japanese Yen</option>
+            <option value="6B">6B · British Pound</option>
+          </optgroup>
+          <optgroup label="▸ Zins-Futures (Anleihen)">
+            <option value="ZB">ZB · 30-Year Treasury Bond</option>
+            <option value="ZN">ZN · 10-Year T-Note</option>
+            <option value="ZF">ZF · 5-Year T-Note</option>
+            <option value="ZT">ZT · 2-Year T-Note</option>
+          </optgroup>
+        </select>
+        <div class="meta-chip" id="assetMeta"></div>
+      </div>
+
+      <div class="field" id="fLots">
+        <label for="lots">Anzahl Lots / Kontrakte <span class="tag">1 Lot = 1 Kontrakt</span></label>
+        <div class="stepper">
+          <button type="button" class="step" id="lotsMinus" aria-label="Kontrakt weniger">−</button>
+          <input type="text" id="lots" inputmode="numeric" placeholder="z. B. 7" value="7">
+          <button type="button" class="step" id="lotsPlus" aria-label="Kontrakt mehr">+</button>
+        </div>
+        <div class="err" id="lotsErr"></div>
+      </div>
+
+      <div class="field">
+        <label id="unitLbl">Einheit für TP / SL</label>
+        <div class="seg" id="seg" data-unit="points" role="group" aria-labelledby="unitLbl">
+          <div class="thumb"></div>
+          <button type="button" id="unitPoints" class="on">Punkte</button>
+          <button type="button" id="unitTicks">Ticks</button>
+        </div>
+        <div class="seg-note" id="segNote">1 Punkt = 4 Ticks · Tickgröße = 0,25 Punkte</div>
+      </div>
+
+      <div class="duo">
+        <div class="field" id="fTp">
+          <label for="tp">Take-Profit <span class="tag" id="tpUnitTag">in Punkten</span></label>
+          <input type="text" id="tp" inputmode="decimal" placeholder="z. B. 15" value="15">
+          <div class="hint" id="tpHint"></div>
+          <div class="err" id="tpErr"></div>
+        </div>
+        <div class="field" id="fSl">
+          <label for="sl">Stop-Loss <span class="tag" id="slUnitTag">in Punkten</span></label>
+          <input type="text" id="sl" inputmode="decimal" placeholder="z. B. 15" value="15">
+          <div class="hint" id="slHint"></div>
+          <div class="err" id="slErr"></div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label>Beispiele laden</label>
+        <div class="presets" id="presets">
+          <button type="button" class="chip" data-preset="0">MNQ · 7 · 15 P</button>
+          <button type="button" class="chip" data-preset="1">MES · 1 · 4 Ticks</button>
+          <button type="button" class="chip" data-preset="2">MCL · 2 · SL 0.50 P</button>
+          <button type="button" class="chip" data-preset="3">MGC · 5 · TP 5 P</button>
+          <button type="button" class="chip" data-preset="4">ES · 2 · SL 10 P</button>
+          <button type="button" class="chip" data-preset="5">NQ · 3 · TP 2,5 P</button>
+          <button type="button" class="chip" data-preset="6">CL · 1 · TP 1 P</button>
+          <button type="button" class="chip" data-preset="7">ZB · 1 · SL 8 Ticks</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel results" aria-labelledby="hRes" aria-live="polite">
+      <div class="panel-head">
+        <h2 id="hRes">Ergebnis</h2>
+        <span class="res-asset mono" id="rAsset">MNQ</span>
+      </div>
+
+      <div class="res-warn" id="resWarn"></div>
+
+      <div class="cards">
+        <div class="card tp" id="cardTp">
+          <div class="lbl">▲ Take-Profit</div>
+          <div class="big mono" id="tpUsd">—</div>
+          <div class="sub" id="tpSub"></div>
+        </div>
+        <div class="card sl" id="cardSl">
+          <div class="lbl">▼ Stop-Loss</div>
+          <div class="big mono" id="slUsd">—</div>
+          <div class="sub" id="slSub"></div>
+        </div>
+      </div>
+
+      <div class="ratio" id="ratioBox">
+        <span class="rlabel">Risk-Reward-Verhältnis</span>
+        <span class="rval" id="ratioVal">1 : 1,00</span>
+      </div>
+
+      <div class="detail">
+        <div class="drow"><span class="k">Asset</span><span class="v" id="dAsset">MNQ</span></div>
+        <div class="drow"><span class="k">Anzahl Kontrakte</span><span class="v" id="dContracts">7</span></div>
+        <div class="drow"><span class="k">Punktewert / Kontrakt</span><span class="v" id="dPoint">2,00 USD</span></div>
+        <div class="drow"><span class="k">Tickgröße</span><span class="v" id="dTickSize">0,25</span></div>
+        <div class="drow"><span class="k">Tickwert / Kontrakt</span><span class="v" id="dTick">0,50 USD</span></div>
+        <div class="drow"><span class="k">Take-Profit</span><span class="v pos" id="dTp">15 Punkte</span></div>
+        <div class="drow"><span class="k">Stop-Loss</span><span class="v neg" id="dSl">15 Punkte</span></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
 <script>
-(()=>{const A={MNQ:['Micro E-mini NASDAQ-100',2,.5],MES:['Micro E-mini S&P 500',5,1.25],NQ:['E-mini NASDAQ-100',20,5],ES:['E-mini S&P 500',50,12.5]};let unit='p';const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n),val=n=>new Intl.NumberFormat('de-DE',{maximumFractionDigits:4}).format(n),num=x=>{x=String(x).trim().replace(',','.');return x===''?null:Number(x)};function calc(){let s=$('asset').value,a=A[s],l=num($('lots').value),t=num($('tp').value),q=num($('sl').value),u=unit==='p'?a[1]:a[2],ul=unit==='p'?'Punkte':'Ticks';$('symbol').textContent=s;$('meta').textContent=`${a[0]} · Punktewert ${fmt(a[1])} USD · Tickwert ${fmt(a[2])} USD`;$('err').textContent=(!Number.isInteger(l)||l<1)?'Bitte eine ganze Anzahl größer als 0 eingeben.':'';let ok=Number.isInteger(l)&&l>0;[['tp',t],['sl',q]].forEach(([id,n])=>$(id+'h').textContent=typeof n==='number'&&Number.isFinite(n)?`= ${val(unit==='p'?n*4:n/4)} ${unit==='p'?'Ticks':'Punkte'}`:'');function out(n,id,f,p){if(ok&&typeof n==='number'&&Number.isFinite(n)&&n>=0){let x=l*n*u;$(id).textContent=(p||'')+fmt(x)+' USD';$(f).textContent=`${l} × ${val(n)} ${ul} × ${fmt(u)} USD = ${fmt(x)} USD`;return x}$(id).textContent='—';$(f).textContent='';return null}let x=out(t,'tpout','tpf','+'),y=out(q,'slout','slf','−');$('dasset').textContent=s+' · '+a[0];$('dlots').textContent=ok?l:'—';$('dpv').textContent=fmt(a[1])+' USD';$('dtv').textContent=fmt(a[2])+' USD';$('dtp').textContent=x===null?'—':val(t)+' '+ul;$('dsl').textContent=y===null?'—':val(q)+' '+ul;if(x>0&&y>0){$('ratio').textContent='Risk-Reward-Verhältnis: 1 : '+fmt(x/y)}else $('ratio').textContent=''}function setUnit(u){if(u===unit)return;[$('tp'),$('sl')].forEach(i=>{let n=num(i.value);if(typeof n==='number'&&Number.isFinite(n))i.value=val(u==='t'?n*4:n/4)});unit=u;$('points').classList.toggle('active',u==='p');$('ticks').classList.toggle('active',u==='t');calc()}$('asset').onchange=calc;['lots','tp','sl'].forEach(id=>$(id).oninput=calc);$('points').onclick=()=>setUnit('p');$('ticks').onclick=()=>setUnit('t');document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{let p=[['MNQ',7,'p',15,15],['MES',1,'t',4,''],['ES',2,'p','',10],['NQ',3,'p','2,5','']][b.dataset.p];$('asset').value=p[0];$('lots').value=p[1];if(p[2]!==unit)setUnit(p[2]);$('tp').value=p[3];$('sl').value=p[4];calc()});calc()})()
-</script></body></html>
+(function(){
+  "use strict";
+
+  var ASSETS = {
+    MNQ:{ cat:"index", name:"Micro E-mini NASDAQ-100",    pv:2,     ts:0.25,   tv:0.5,    tpp:4,    note:"" },
+    MES:{ cat:"index", name:"Micro E-mini S&P 500",       pv:5,     ts:0.25,   tv:1.25,   tpp:4,    note:"" },
+    MYM:{ cat:"index", name:"Micro E-mini Dow",           pv:0.5,   ts:1.0,    tv:0.5,    tpp:1,    note:"1 Punkt = 1 Tick" },
+    M2K:{ cat:"index", name:"Micro E-mini Russell 2000",  pv:5,     ts:0.1,    tv:0.5,    tpp:10,   note:"" },
+    NQ: { cat:"index", name:"E-mini NASDAQ-100",          pv:20,    ts:0.25,   tv:5,      tpp:4,    note:"" },
+    ES: { cat:"index", name:"E-mini S&P 500",             pv:50,    ts:0.25,   tv:12.5,   tpp:4,    note:"" },
+    YM: { cat:"index", name:"E-mini Dow",                 pv:5,     ts:1.0,    tv:5,      tpp:1,    note:"1 Punkt = 1 Tick" },
+    RTY:{ cat:"index", name:"E-mini Russell 2000",        pv:50,    ts:0.1,    tv:5,      tpp:10,   note:"" },
+    NKD:{ cat:"index", name:"Nikkei 225 USD",             pv:5,     ts:5.0,    tv:25,     tpp:0.2,  note:"1 Tick = 5 Punkte" },
+
+    MCL:{ cat:"energy", name:"Micro WTI Crude Oil",       pv:100,   ts:0.01,   tv:1,      tpp:100,  note:"100 Barrel" },
+    CL: { cat:"energy", name:"WTI Crude Oil",             pv:1000,  ts:0.01,   tv:10,     tpp:100,  note:"1.000 Barrel" },
+    MNG:{ cat:"energy", name:"Micro Natural Gas",         pv:1000,  ts:0.001,  tv:1,      tpp:1000, note:"1.000 MMBtu" },
+    NG: { cat:"energy", name:"Natural Gas",               pv:10000, ts:0.001,  tv:10,     tpp:1000, note:"10.000 MMBtu" },
+
+    MGC:{ cat:"metal", name:"Micro Gold",                 pv:10,    ts:0.10,   tv:1,      tpp:10,   note:"10 Feinunzen" },
+    GC: { cat:"metal", name:"Gold",                       pv:100,   ts:0.10,   tv:10,     tpp:10,   note:"100 Feinunzen" },
+    SIL:{ cat:"metal", name:"Micro Silver",               pv:1000,  ts:0.01,   tv:5,      tpp:100,  note:"1.000 Feinunzen" },
+    SI: { cat:"metal", name:"Silver",                     pv:5000,  ts:0.005,  tv:25,     tpp:200,  note:"5.000 Feinunzen" },
+    MHG:{ cat:"metal", name:"Micro Copper",               pv:2500,  ts:0.0005, tv:1.25,   tpp:5000, note:"2.500 lbs" },
+    HG: { cat:"metal", name:"Copper",                     pv:25000, ts:0.0005, tv:12.5,   tpp:5000, note:"25.000 lbs" },
+    PL: { cat:"metal", name:"Platinum",                   pv:50,    ts:0.1,    tv:5,      tpp:10,   note:"50 Feinunzen" },
+
+    MBT:{ cat:"crypto", name:"Micro Bitcoin",             pv:0.10,  ts:5.0,    tv:0.50,   tpp:0.2,  note:"0,1 BTC · 1 Tick = 5 Punkte" },
+    BTC:{ cat:"crypto", name:"Bitcoin",                   pv:5,     ts:5.0,    tv:25,     tpp:0.2,  note:"5 BTC · 1 Tick = 5 Punkte" },
+    MET:{ cat:"crypto", name:"Micro Ether",               pv:0.10,  ts:0.5,    tv:0.05,   tpp:2,    note:"0,1 ETH" },
+    ETH:{ cat:"crypto", name:"Ether",                     pv:50,    ts:0.5,    tv:25,     tpp:2,    note:"50 ETH" },
+
+    M6E:{ cat:"fx", name:"Micro EUR/USD",                 pv:125,   ts:0.0001, tv:1.25,   tpp:10000, note:"12.500 EUR" },
+    M6A:{ cat:"fx", name:"Micro AUD/USD",                 pv:100,   ts:0.0001, tv:1,      tpp:10000, note:"10.000 AUD" },
+    MCD:{ cat:"fx", name:"Micro CAD/USD",                 pv:100,   ts:0.0001, tv:1,      tpp:10000, note:"10.000 CAD" },
+    M6B:{ cat:"fx", name:"Micro GBP/USD",                 pv:62.5,  ts:0.0001, tv:0.625,  tpp:10000, note:"6.250 GBP" },
+    MSF:{ cat:"fx", name:"Micro CHF/USD",                 pv:125,   ts:0.0001, tv:1.25,   tpp:10000, note:"12.500 CHF" },
+    "6E":{ cat:"fx", name:"Euro FX",                      pv:125000,ts:0.00005,tv:6.25,   tpp:20000, note:"125.000 EUR" },
+    "6J":{ cat:"fx", name:"Japanese Yen",                 pv:12500000,ts:0.0000005,tv:6.25,tpp:2000000, note:"12,5 Mio. JPY" },
+    "6B":{ cat:"fx", name:"British Pound",                pv:62500, ts:0.0001, tv:6.25,   tpp:10000, note:"62.500 GBP" },
+
+    ZB: { cat:"bond", name:"30-Year Treasury Bond",       pv:1000,  ts:1/32,   tv:31.25,  tpp:32,   note:"1/32-Punkte" },
+    ZN: { cat:"bond", name:"10-Year T-Note",              pv:1000,  ts:1/64,   tv:15.625, tpp:64,   note:"1/64-Punkte" },
+    ZF: { cat:"bond", name:"5-Year T-Note",               pv:1000,  ts:1/128,  tv:7.8125, tpp:128,  note:"1/128-Punkte" },
+    ZT: { cat:"bond", name:"2-Year T-Note",               pv:2000,  ts:1/128,  tv:15.625, tpp:128,  note:"1/128-Punkte" }
+  };
+
+  var unit = "points";
+
+  var fmtUSD = new Intl.NumberFormat("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtVal = new Intl.NumberFormat("de-DE",{maximumFractionDigits:6});
+  var fmtTick = new Intl.NumberFormat("de-DE",{maximumFractionDigits:7});
+
+  var $ = function(id){ return document.getElementById(id); };
+  var el = {
+    asset:$("asset"), assetMeta:$("assetMeta"),
+    lots:$("lots"), lotsMinus:$("lotsMinus"), lotsPlus:$("lotsPlus"),
+    fLots:$("fLots"), lotsErr:$("lotsErr"),
+    seg:$("seg"), unitPoints:$("unitPoints"), unitTicks:$("unitTicks"),
+    segNote:$("segNote"),
+    tp:$("tp"), sl:$("sl"),
+    fTp:$("fTp"), fSl:$("fSl"), tpErr:$("tpErr"), slErr:$("slErr"),
+    tpHint:$("tpHint"), slHint:$("slHint"),
+    tpUnitTag:$("tpUnitTag"), slUnitTag:$("slUnitTag"),
+    rAsset:$("rAsset"), resWarn:$("resWarn"),
+    cardTp:$("cardTp"), cardSl:$("cardSl"),
+    tpUsd:$("tpUsd"), slUsd:$("slUsd"), tpSub:$("tpSub"), slSub:$("slSub"),
+    ratioBox:$("ratioBox"), ratioVal:$("ratioVal"),
+    dAsset:$("dAsset"), dContracts:$("dContracts"),
+    dPoint:$("dPoint"), dTick:$("dTick"), dTickSize:$("dTickSize"),
+    dTp:$("dTp"), dSl:$("dSl"),
+    presets:$("presets")
+  };
+
+  function parseNum(raw){
+    if(raw === null || raw === undefined) return NaN;
+    var s = String(raw).trim().replace(/\s/g,"");
+    if(s === "") return null;
+    s = s.replace(",", ".");
+    var n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function setFieldError(wrap, errEl, msg){ wrap.classList.add("invalid"); errEl.textContent = msg; }
+  function clearFieldError(wrap, errEl){ wrap.classList.remove("invalid"); errEl.textContent = ""; }
+
+  function bump(card){
+    card.classList.remove("bump");
+    void card.offsetWidth;
+    card.classList.add("bump");
+  }
+
+  function setBigMoney(bigEl, value, prefix){
+    var from = bigEl._num;
+    if(typeof from !== "number" || !isFinite(from)) from = value;
+    bigEl._num = value;
+    var txt = (prefix && value !== 0 ? prefix : "") + fmtUSD.format(value) + " USD";
+    if(from === value){ bigEl.textContent = txt; return; }
+    var start = null, dur = 340;
+    function frame(ts){
+      if(start === null) start = ts;
+      var p = Math.min(1,(ts-start)/dur);
+      var e = 1 - Math.pow(1-p,3);
+      var cur = from + (value-from)*e;
+      bigEl.textContent = (prefix && cur !== 0 ? prefix : "") + fmtUSD.format(cur) + " USD";
+      if(p < 1) requestAnimationFrame(frame);
+      else bigEl.textContent = txt;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function setDash(bigEl, subEl, note){
+    bigEl._num = undefined;
+    bigEl.textContent = "—";
+    subEl.textContent = note;
+  }
+
+  function validateLots(){
+    var n = parseNum(el.lots.value);
+    if(n === null){ setFieldError(el.fLots, el.lotsErr, "Bitte Anzahl der Kontrakte eingeben."); return null; }
+    if(isNaN(n) || n <= 0 || n % 1 !== 0){
+      setFieldError(el.fLots, el.lotsErr, "Anzahl muss eine ganze Zahl größer als 0 sein."); return null;
+    }
+    clearFieldError(el.fLots, el.lotsErr);
+    return n;
+  }
+
+  function validateSide(input, wrap, errEl){
+    var n = parseNum(input.value);
+    if(n === null){ clearFieldError(wrap, errEl); return null; }
+    if(isNaN(n)){ setFieldError(wrap, errEl, "Ungültige Eingabe – bitte eine Zahl verwenden."); return undefined; }
+    if(n < 0){ setFieldError(wrap, errEl, "Wert darf nicht negativ sein."); return undefined; }
+    clearFieldError(wrap, errEl);
+    return n;
+  }
+
+  function renderHint(input, hintEl, val, a){
+    if(typeof val !== "number"){ hintEl.innerHTML = ""; return; }
+    var tpp = a.tpp;
+    if(unit === "points"){
+      var ticks = val * tpp;
+      hintEl.innerHTML = "= <b>" + fmtVal.format(ticks) + " Ticks</b>";
+    } else {
+      var points = tpp !== 0 ? val / tpp : val * a.ts;
+      hintEl.innerHTML = "= <b>" + fmtVal.format(points) + " Punkte</b>";
+    }
+  }
+
+  function updateSegNote(a){
+    var tpp = a.tpp;
+    var tsStr = fmtTick.format(a.ts);
+    if(tpp === 1){
+      el.segNote.textContent = "1 Punkt = 1 Tick · Tickgröße = " + tsStr + " Punkte";
+    } else if(tpp < 1){
+      el.segNote.textContent = "1 Tick = " + fmtVal.format(1/tpp) + " Punkte · Tickgröße = " + tsStr + " USD pro Bitcoin/ETH";
+    } else {
+      el.segNote.textContent = "1 Punkt = " + fmtVal.format(tpp) + " Ticks · Tickgröße = " + tsStr;
+    }
+  }
+
+  function calc(){
+    var sym = el.asset.value;
+    var a = ASSETS[sym];
+    var lots = validateLots();
+    var tpVal = validateSide(el.tp, el.fTp, el.tpErr);
+    var slVal = validateSide(el.sl, el.fSl, el.slErr);
+
+    var perUnit = (unit === "points") ? a.pv : a.tv;
+    var uLabel  = (unit === "points") ? "Punkte" : "Ticks";
+
+    updateSegNote(a);
+
+    el.rAsset.textContent = sym;
+    el.dAsset.textContent = sym + " · " + a.name;
+    el.dPoint.textContent = fmtUSD.format(a.pv) + " USD";
+    el.dTick.textContent  = fmtUSD.format(a.tv) + " USD";
+    el.dTickSize.textContent = fmtTick.format(a.ts);
+    el.dContracts.textContent = (lots !== null) ? String(lots) : "—";
+
+    var metaParts = ["<b>" + sym + "</b> · " + a.name];
+    metaParts.push("Punktewert <b>" + fmtUSD.format(a.pv) + " $</b>");
+    metaParts.push("Tickwert <b>" + fmtUSD.format(a.tv) + " $</b>");
+    if(a.note) metaParts.push("<br><span style='color:var(--muted-2)'>" + a.note + "</span>");
+    el.assetMeta.innerHTML = metaParts.join(" · ");
+
+    renderHint(el.tp, el.tpHint, tpVal, a);
+    renderHint(el.sl, el.slHint, slVal, a);
+
+    var anyError = el.fLots.classList.contains("invalid") ||
+                   el.fTp.classList.contains("invalid") ||
+                   el.fSl.classList.contains("invalid");
+    if(anyError){
+      el.resWarn.textContent = "⚠ Bitte Eingaben prüfen – ungültige Werte werden nicht berechnet.";
+      el.resWarn.classList.add("show");
+    } else {
+      el.resWarn.classList.remove("show");
+    }
+
+    var tpUsd = null;
+    if(lots !== null && typeof tpVal === "number"){
+      tpUsd = lots * tpVal * perUnit;
+      setBigMoney(el.tpUsd, tpUsd, "+");
+      el.tpSub.textContent = lots + " × " + fmtVal.format(tpVal) + " " + uLabel +
+        " × " + fmtUSD.format(perUnit) + " USD = " + fmtUSD.format(tpUsd) + " USD";
+      el.cardTp.classList.remove("dim");
+      bump(el.cardTp);
+      el.dTp.textContent = fmtVal.format(tpVal) + " " + uLabel;
+    } else {
+      el.cardTp.classList.add("dim");
+      var noteTp = (tpVal === undefined) ? "Eingabe ungültig"
+                 : (lots === null && parseNum(el.tp.value) !== null) ? "Kontrakt-Anzahl ungültig"
+                 : "Kein Take-Profit angegeben";
+      setDash(el.tpUsd, el.tpSub, noteTp);
+      el.dTp.textContent = "—";
+    }
+
+    var slUsd = null;
+    if(lots !== null && typeof slVal === "number"){
+      slUsd = lots * slVal * perUnit;
+      setBigMoney(el.slUsd, slUsd, "−");
+      el.slSub.textContent = lots + " × " + fmtVal.format(slVal) + " " + uLabel +
+        " × " + fmtUSD.format(perUnit) + " USD = " + fmtUSD.format(slUsd) + " USD";
+      el.cardSl.classList.remove("dim");
+      bump(el.cardSl);
+      el.dSl.textContent = fmtVal.format(slVal) + " " + uLabel;
+    } else {
+      el.cardSl.classList.add("dim");
+      var noteSl = (slVal === undefined) ? "Eingabe ungültig"
+                 : (lots === null && parseNum(el.sl.value) !== null) ? "Kontrakt-Anzahl ungültig"
+                 : "Kein Stop-Loss angegeben";
+      setDash(el.slUsd, el.slSub, noteSl);
+      el.dSl.textContent = "—";
+    }
+
+    if(tpUsd !== null && slUsd !== null && tpUsd > 0 && slUsd > 0){
+      el.ratioVal.textContent = "1 : " + fmtUSD.format(tpUsd / slUsd);
+      el.ratioBox.classList.add("show");
+    } else {
+      el.ratioBox.classList.remove("show");
+    }
+  }
+
+  function setUnit(newUnit, convert){
+    if(convert && newUnit !== unit){
+      var a = ASSETS[el.asset.value];
+      var tpp = a.tpp;
+      [el.tp, el.sl].forEach(function(inp){
+        var n = parseNum(inp.value);
+        if(typeof n === "number"){
+          var conv;
+          if(newUnit === "ticks"){
+            conv = n * tpp;
+          } else {
+            conv = tpp !== 0 ? n / tpp : n * a.ts;
+          }
+          inp.value = fmtVal.format(conv);
+        }
+      });
+    }
+    unit = newUnit;
+    el.seg.dataset.unit = newUnit;
+    var isP = newUnit === "points";
+    el.unitPoints.classList.toggle("on", isP);
+    el.unitTicks.classList.toggle("on", !isP);
+    el.tpUnitTag.textContent = isP ? "in Punkten" : "in Ticks";
+    el.slUnitTag.textContent = isP ? "in Punkten" : "in Ticks";
+    calc();
+  }
+
+  el.unitPoints.addEventListener("click", function(){ setUnit("points", true); });
+  el.unitTicks.addEventListener("click", function(){ setUnit("ticks", true); });
+
+  function stepLots(delta){
+    var n = parseNum(el.lots.value);
+    var cur = (typeof n === "number" && n > 0 && n % 1 === 0) ? n : 1;
+    el.lots.value = String(Math.max(1, cur + delta));
+    calc();
+  }
+  el.lotsMinus.addEventListener("click", function(){ stepLots(-1); });
+  el.lotsPlus.addEventListener("click", function(){ stepLots(1); });
+
+  var PRESETS = [
+    { a:"MNQ", lots:"7", u:"points", tp:"15",   sl:"15"   },
+    { a:"MES", lots:"1", u:"ticks",  tp:"4",    sl:""     },
+    { a:"MCL", lots:"2", u:"points", tp:"",     sl:"0.50" },
+    { a:"MGC", lots:"5", u:"points", tp:"5",    sl:""     },
+    { a:"ES",  lots:"2", u:"points", tp:"",     sl:"10"   },
+    { a:"NQ",  lots:"3", u:"points", tp:"2,5",  sl:""     },
+    { a:"CL",  lots:"1", u:"points", tp:"1",    sl:""     },
+    { a:"ZB",  lots:"1", u:"ticks",  tp:"",     sl:"8"    }
+  ];
+  el.presets.addEventListener("click", function(ev){
+    var btn = ev.target.closest("[data-preset]");
+    if(!btn) return;
+    var p = PRESETS[Number(btn.dataset.preset)];
+    if(!p) return;
+    el.asset.value = p.a;
+    el.lots.value = p.lots;
+    if(p.u !== unit) setUnit(p.u, false);
+    el.tp.value = p.tp;
+    el.sl.value = p.sl;
+    calc();
+  });
+
+  ["input","change"].forEach(function(evt){
+    [el.asset, el.lots, el.tp, el.sl].forEach(function(node){
+      node.addEventListener(evt, calc);
+    });
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
